@@ -4,7 +4,8 @@ using System.Threading.Tasks;
 using Dropbox.Api;
 using System.IO;
 using Dropbox.Api.Files;
-using Aspose.Zip;
+using Ionic.Zip;
+using System.Text;
 
 namespace DownloadAFile
 {
@@ -21,15 +22,31 @@ namespace DownloadAFile
 
         static void Main(string[] args)
         {
-            var task = Task.Run((Func<Task>)Program.Run);
-            task.Wait();
-        }
-        static async Task Run()
-        {
-            // 0. If zipped_folder does not exist, create such folder
+            Console.WriteLine(System.Text.Encoding.Default.EncodingName);
+            var en = Encoding.GetEncodings();
+            // 0. If zipped_folder/unzipped_folder does not exist, create such folder
             Directory.CreateDirectory(zipped_folder);
+            Directory.CreateDirectory(unzipped_folder);
 
             // 1.Download encrypted files from DBX
+            var task = Task.Run((Func<Task>)Program.Run);
+            task.Wait();
+
+            // 2. Decode encrypted files into decrypted files
+            Decoding();
+
+            // 3. Upload the decrypted files to the DBX
+            Upload2Dbx();
+
+            // 4. Delete Folders.
+            var dir = new DirectoryInfo(zipped_folder);
+            dir.Delete(true);
+            dir = new DirectoryInfo(unzipped_folder);
+            dir.Delete(true);
+        }
+
+        private static async Task Run()
+        {
             using (var dbx = new DropboxClient(token))
             {
                 var list = await dbx.Files.ListFolderAsync(dbx_source_folder);
@@ -45,15 +62,26 @@ namespace DownloadAFile
                     }
                 }
             }
+        }
 
-            // 2. Decode encrypted files into decrypted files
+        private static void Decoding()
+        {
             DirectoryInfo TheZippedFolder = new DirectoryInfo(zipped_folder);
             foreach (FileInfo NextFile in TheZippedFolder.GetFiles())
-                using (FileStream zipFile = File.Open(zipped_folder + "/" + NextFile.Name, FileMode.Open))
-                using (var archive = new Archive(zipFile, new ArchiveLoadOptions() { DecryptionPassword = "biaoge_ceph" }))
-                    archive.ExtractToDirectory(unzipped_folder);
+            {
+                using (ZipFile archive = new ZipFile(zipped_folder + "/" + NextFile.Name, Encoding.GetEncoding("GB2312")))
+                {
+                    archive.Password = "biaoge_ceph";
+                    archive.Encryption = EncryptionAlgorithm.PkzipWeak; // the default: you might need to select the proper value here
+                    archive.StatusMessageTextWriter = Console.Out;
 
-            // 3. Upload the decrypted files to the DBX
+                    archive.ExtractAll(unzipped_folder, ExtractExistingFileAction.OverwriteSilently);
+                }
+            }
+        }
+
+        private static void Upload2Dbx()
+        {            
             DirectoryInfo TheUnZippedFolder = new DirectoryInfo(unzipped_folder);
             using (var dbx = new DropboxClient(token))
                 foreach (FileInfo NextFile in TheUnZippedFolder.GetFiles())
