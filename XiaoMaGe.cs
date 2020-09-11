@@ -22,7 +22,7 @@ namespace DownloadAFile
 
         static void Main(string[] args)
         {
-            System.Text.Encoding.RegisterProvider (System.Text.CodePagesEncodingProvider.Instance);
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
             Console.WriteLine(System.Text.Encoding.Default.EncodingName);
             var en = Encoding.GetEncodings();
@@ -84,6 +84,7 @@ namespace DownloadAFile
 
         private static void Upload2Dbx()
         {            
+            Console.WriteLine("Begin to upload to Dropbox...");
             DirectoryInfo TheUnZippedFolder = new DirectoryInfo(unzipped_folder);
             using (var dbx = new DropboxClient(token))
                 foreach (FileInfo NextFile in TheUnZippedFolder.GetFiles())
