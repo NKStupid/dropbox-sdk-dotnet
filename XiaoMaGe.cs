@@ -24,27 +24,38 @@ namespace DownloadAFile
         {
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-            Console.WriteLine(System.Text.Encoding.Default.EncodingName);
-            var en = Encoding.GetEncodings();
-            // 0. If zipped_folder/unzipped_folder does not exist, create such folder
-            Directory.CreateDirectory(zipped_folder);
-            Directory.CreateDirectory(unzipped_folder);
+            try
+            {
+                // 0. If zipped_folder/unzipped_folder does not exist, create such folder
+                Directory.CreateDirectory(zipped_folder);
+                Directory.CreateDirectory(unzipped_folder);
 
-            // 1.Download encrypted files from DBX
-            var task = Task.Run((Func<Task>)Program.Run);
-            task.Wait();
+                // 1.Download encrypted files from DBX
+                var task = Task.Run((Func<Task>)Program.Run);
+                task.Wait();
 
-            // 2. Decode encrypted files into decrypted files
-            Decoding();
+                // 2. Decode encrypted files into decrypted files
+                Decoding();
 
-            // 3. Upload the decrypted files to the DBX
-            Upload2Dbx();
+                // 3. Upload the decrypted files to the DBX
+                Upload2Dbx();
 
-            // 4. Delete Folders.
-            var dir = new DirectoryInfo(zipped_folder);
-            dir.Delete(true);
-            dir = new DirectoryInfo(unzipped_folder);
-            dir.Delete(true);
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+            finally
+            {
+                // 4. Delete Folders.
+                var dir = new DirectoryInfo(zipped_folder);
+                dir.Delete(true);
+                dir = new DirectoryInfo(unzipped_folder);
+                dir.Delete(true);
+
+            }
+        }
         }
 
         private static async Task Run()
