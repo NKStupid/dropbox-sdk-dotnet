@@ -22,6 +22,8 @@ namespace DownloadAFile
 
         static void Main(string[] args)
         {
+            System.Text.Encoding.RegisterProvider (System.Text.CodePagesEncodingProvider.Instance);
+
             Console.WriteLine(System.Text.Encoding.Default.EncodingName);
             var en = Encoding.GetEncodings();
             // 0. If zipped_folder/unzipped_folder does not exist, create such folder
