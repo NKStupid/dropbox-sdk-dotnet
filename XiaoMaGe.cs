@@ -90,6 +90,7 @@ namespace DownloadAFile
                 foreach (FileInfo NextFile in TheUnZippedFolder.GetFiles())
                     using (var mem = new MemoryStream(File.ReadAllBytes(unzipped_folder + "/" + NextFile.Name)))
                         dbx.Files.UploadAsync(dbx_destination_folder + "/" + NextFile.Name, WriteMode.Overwrite.Instance, body: mem).Wait();
+            Console.WriteLine("End of uploading to Dropbox...");
         }
     }
 }
