@@ -46,12 +46,24 @@ namespace DownloadAFile
                 }
             }
 
+
             // 2. Decode encrypted files into decrypted files
             DirectoryInfo TheZippedFolder = new DirectoryInfo(zipped_folder);
             foreach (FileInfo NextFile in TheZippedFolder.GetFiles())
-                using (FileStream zipFile = File.Open(zipped_folder + "/" + NextFile.Name, FileMode.Open))
-                using (var archive = new Archive(zipFile, new ArchiveLoadOptions() { DecryptionPassword = "biaoge_ceph" }))
-                    archive.ExtractToDirectory(unzipped_folder);
+            {
+                using (ZipFile archive = new ZipFile(zipped_folder + "/" + NextFile.Name, System.Text.Encoding.Default))
+                {
+                    archive.Password = "biaoge_ceph";
+                    archive.Encryption = EncryptionAlgorithm.PkzipWeak; // the default: you might need to select the proper value here
+                    archive.StatusMessageTextWriter = Console.Out;
+
+                    archive.ExtractAll(unzipped_folder, ExtractExistingFileAction.OverwriteSilently);
+                }
+            }
+                //using (FileStream zipFile = File.Open(zipped_folder + "/" + NextFile.Name, FileMode.Open))
+                //using (var archive = new Archive(zipFile, new ArchiveLoadOptions() { DecryptionPassword = "biaoge_ceph" }))
+                //    archive.ExtractToDirectory(unzipped_folder);
+
 
             // 3. Upload the decrypted files to the DBX
             DirectoryInfo TheUnZippedFolder = new DirectoryInfo(unzipped_folder);
